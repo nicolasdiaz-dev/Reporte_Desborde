@@ -249,7 +249,7 @@ st.markdown("")
 with st.expander("📅 Ver todos los días"):
     styled = (
         hdf.style
-        .applymap(style_pct, subset=["% Desborde", "% QUEUED", "% RINGING"])
+        .map(style_pct, subset=["% Desborde", "% QUEUED", "% RINGING"])
         .format({
             "Total Llamadas": "{:,}", "Total Desborde": "{:,}",
             "% Desborde": "{}%", "% QUEUED": "{}%", "% RINGING": "{}%",
@@ -353,6 +353,6 @@ with st.expander("📈 Ver análisis completo de desborde INB"):
             return ""
 
         st.dataframe(
-            det_df.style.applymap(style_detail, subset=[f for f in fechas]),
+            det_df.style.map(style_detail, subset=[f for f in fechas]),
             use_container_width=True, hide_index=True,
         )
