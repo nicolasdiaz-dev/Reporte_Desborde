@@ -1,0 +1,6 @@
+credenciales.json
+venv/
+__pycache__/
+*.pyc
+*.xlsx
+~$*

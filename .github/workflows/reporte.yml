@@ -1,0 +1,40 @@
+name: Generar Reporte Hunter Argentina
+
+on:
+  schedule:
+    # Cada 30 minutos de lunes a viernes, 8am–8pm Argentina (UTC-3 → 11:00–23:00 UTC)
+    - cron: '*/30 11-23 * * 1-5'
+  workflow_dispatch:   # También permite correrlo manualmente desde GitHub
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      - name: Crear archivo de credenciales
+        run: echo '${{ secrets.GOOGLE_CREDENTIALS }}' > credenciales.json
+
+      - name: Generar reporte
+        run: python analisis_inb.py
+
+      - name: Preparar para deploy (renombrar a index.html)
+        run: cp reporte_desborde_inb.html index.html
+
+      - name: Deploy a GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: .
+          publish_branch: gh-pages
+          include_files: index.html
