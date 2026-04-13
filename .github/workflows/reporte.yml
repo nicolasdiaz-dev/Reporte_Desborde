@@ -4,7 +4,7 @@ on:
   schedule:
     # Cada 30 minutos de lunes a viernes, 8am–8pm Argentina (UTC-3 → 11:00–23:00 UTC)
     - cron: '*/30 11-23 * * 1-5'
-  workflow_dispatch:   # También permite correrlo manualmente desde GitHub
+  workflow_dispatch:   # Permite correrlo manualmente desde GitHub
 
 jobs:
   build-and-deploy:
@@ -28,13 +28,13 @@ jobs:
       - name: Generar reporte
         run: python analisis_inb.py
 
-      - name: Preparar para deploy (renombrar a index.html)
+      - name: Renombrar a index.html
         run: cp reporte_desborde_inb.html index.html
 
-      - name: Deploy a GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
+      - name: Deploy a Netlify
+        uses: netlify/actions/cli@master
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: .
-          publish_branch: gh-pages
-          include_files: index.html
+          args: deploy --prod --dir=. --filter index.html
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
