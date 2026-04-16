@@ -7,14 +7,14 @@ from google.oauth2.service_account import Credentials
 import pandas as pd
 import plotly.graph_objects as go
 
-# ── Page config ───────────────────────────────────────────────────────────────
+# Page config
 st.set_page_config(
-    page_title="Hunter Argentina · Reporte INB",
+    page_title="Hunter Argentina - Reporte INB",
     page_icon="📊",
     layout="wide",
 )
 
-# ── Constantes ────────────────────────────────────────────────────────────────
+# Constantes
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive",
@@ -28,7 +28,7 @@ TURNO_MANUAL = {
     "9281": "TM", "9297": "TM", "9321": "TM", "9372": "TM",
 }
 
-# ── Color gradient ────────────────────────────────────────────────────────────
+# Color gradient
 def lerp(a, b, t):
     return int(a + (b - a) * t)
 
@@ -47,7 +47,7 @@ def style_pct(val):
     c = color_hex(v)
     return f"color: {c}; font-weight: 700"
 
-# ── Data loading (cache 30 min) ───────────────────────────────────────────────
+# Data loading (cache 30 min)
 @st.cache_data(ttl=1800)
 def load_data():
     if "GOOGLE_CREDENTIALS" in st.secrets:
@@ -63,10 +63,10 @@ def load_data():
     headers = data[0] + ["COL_AA", "TURNO", "SKILL"]
     df = pd.DataFrame(data[1:], columns=headers)
 
-    df["FECHA"]       = df["FECHA"].astype(str).str.strip()
-    df["ANI_TELEFONO"]= df["ANI_TELEFONO"].astype(str).str.strip()
-    df["TURNO"]       = df["TURNO"].fillna("").astype(str).str.strip()
-    df["SKILL"]       = df["SKILL"].fillna("").astype(str).str.strip()
+    df["FECHA"]        = df["FECHA"].astype(str).str.strip()
+    df["ANI_TELEFONO"] = df["ANI_TELEFONO"].astype(str).str.strip()
+    df["TURNO"]        = df["TURNO"].fillna("").astype(str).str.strip()
+    df["SKILL"]        = df["SKILL"].fillna("").astype(str).str.strip()
 
     df = df[df["FECHA"].str.match(r"^\d{8}$")]
     df["FECHA"] = pd.to_datetime(df["FECHA"], format="%Y%m%d").dt.strftime("%d/%m/%Y")
@@ -99,9 +99,9 @@ def load_data():
     ).reset_index()
     pw.columns.name = None
 
-    pw["SKILL"]  = pw["COD_AGENTE"].map(agente_skill)
-    pw["TURNO"]  = pw["COD_AGENTE"].map(agente_turno)
-    pw["USUARIO"]= pw["COD_AGENTE"].map(agente_nombre)
+    pw["SKILL"]   = pw["COD_AGENTE"].map(agente_skill)
+    pw["TURNO"]   = pw["COD_AGENTE"].map(agente_turno)
+    pw["USUARIO"] = pw["COD_AGENTE"].map(agente_nombre)
 
     fechas_cols = sorted([c for c in pw.columns if c not in ["COD_AGENTE","SKILL","TURNO","USUARIO"]])
 
@@ -154,19 +154,19 @@ def load_data():
         })
 
     return dict(
-        fechas    = fechas_cols,
-        hunter    = hunter_rows,
-        total_dia = [int(total_dia[f]) for f in fechas_cols],
-        total_inb = [int(total_inb[f]) for f in fechas_cols],
-        total_desb= [int(total_desb[f]) for f in fechas_cols],
-        pct_desb  = [float(pct_desb[f]) for f in fechas_cols],
-        pct_inb   = [float(pct_inb[f])  for f in fechas_cols],
+        fechas     = fechas_cols,
+        hunter     = hunter_rows,
+        total_dia  = [int(total_dia[f]) for f in fechas_cols],
+        total_inb  = [int(total_inb[f]) for f in fechas_cols],
+        total_desb = [int(total_desb[f]) for f in fechas_cols],
+        pct_desb   = [float(pct_desb[f]) for f in fechas_cols],
+        pct_inb    = [float(pct_inb[f])  for f in fechas_cols],
         pct_tm=pct_tm, pct_tt=pct_tt,
         prom_desb=prom_desb, prom_inb=prom_inb,
         prom_tm=prom_tm, prom_tt=prom_tt,
     )
 
-# ── CSS global ────────────────────────────────────────────────────────────────
+# CSS global
 st.markdown("""
 <style>
 section[data-testid="stSidebar"] { display: none; }
@@ -189,7 +189,7 @@ div[data-testid="stRadio"] label { font-size: 0.78rem !important; }
 </style>
 """, unsafe_allow_html=True)
 
-# ── Load ──────────────────────────────────────────────────────────────────────
+# Load
 with st.spinner("Cargando datos desde Google Sheets..."):
     d = load_data()
 
@@ -198,28 +198,28 @@ hunter     = d["hunter"]
 hdf        = pd.DataFrame(hunter)
 def_idx    = max(len(fechas) - 2, 0)
 
-# ═══════════════════════════════════════════════════════════════════════════════
+# ======================================================================
 # HUNTER ARGENTINA
-# ═══════════════════════════════════════════════════════════════════════════════
+# ======================================================================
 col_h, col_wa = st.columns([5, 1])
 with col_h:
     st.markdown("## 📊 Hunter Argentina")
-    st.caption("Llamadas entrantes · Resumen diario")
+    st.caption("Llamadas entrantes - Resumen diario")
 
 selected   = st.radio(
-    "Día:", fechas, index=def_idx, horizontal=True, label_visibility="collapsed"
+    "Dia:", fechas, index=def_idx, horizontal=True, label_visibility="collapsed"
 )
 idx        = fechas.index(selected)
-dia_actual = hunter[idx]  # renombrado para no colisionar con el loop de la tabla
+dia_actual = hunter[idx]
 
 wa_text = (
-    f"📊 *Hunter Argentina* · {dia_actual['Fecha']}\n"
-    f"━━━━━━━━━━━━━━━━\n"
-    f"📞 Total Llamadas: {dia_actual['Total Llamadas']:,}\n"
-    f"↩️ Total Desborde: {dia_actual['Total Desborde']:,}\n"
-    f"📉 % Desborde: {dia_actual['% Desborde']}%\n"
-    f"⏳ % QUEUED: {dia_actual['% QUEUED']}%\n"
-    f"🔔 % RINGING: {dia_actual['% RINGING']}%"
+    f"📊 Hunter Argentina - {dia_actual['Fecha']}\n"
+    f"────────────────\n"
+    f"Total Llamadas: {dia_actual['Total Llamadas']:,}\n"
+    f"Total Desborde: {dia_actual['Total Desborde']:,}\n"
+    f"% Desborde: {dia_actual['% Desborde']}%\n"
+    f"% QUEUED: {dia_actual['% QUEUED']}%\n"
+    f"% RINGING: {dia_actual['% RINGING']}%"
 )
 wa_url = f"https://wa.me/?text={urllib.parse.quote(wa_text)}"
 
@@ -229,7 +229,7 @@ with col_wa:
         unsafe_allow_html=True,
     )
 
-# ── Métricas del día seleccionado ─────────────────────────────────────────────
+# Metricas del dia seleccionado
 st.markdown(f"#### {selected}")
 c1, c2, c3, c4, c5 = st.columns(5)
 
@@ -250,8 +250,45 @@ for col, key in [(c3, "% Desborde"), (c4, "% QUEUED"), (c5, "% RINGING")]:
 
 st.markdown("")
 
-# ── Tabla todos los días (colapsable) ─────────────────────────────────────────
-with st.expander("📅 Ver todos los días"):
+# ── Tabla resumen visible (sin expander) ──────────────────────────────
+filas = [
+    ("LLAMADAS TOTALES", [h["Total Llamadas"] for h in hunter], False),
+    ("DESBORDE",         [h["Total Desborde"] for h in hunter], False),
+    ("% DESBORDE",       [h["% Desborde"]     for h in hunter], True),
+    ("ABANDONADAS",      [h["QUEUED_ABS"]      for h in hunter], False),
+    ("% ABANDONADAS",    [h["% QUEUED"]        for h in hunter], True),
+    ("RINGING",          [h["RINGING_ABS"]     for h in hunter], False),
+    ("% RINGING",        [h["% RINGING"]       for h in hunter], True),
+]
+
+det_rows = []
+for label, vals, es_pct in filas:
+    det_row = {"": label}
+    for f, v in zip(fechas, vals):
+        det_row[f] = f"{v}%" if es_pct else int(v)
+    det_rows.append(det_row)
+
+det_df     = pd.DataFrame(det_rows)
+fecha_cols = [c for c in det_df.columns if c != ""]
+
+def style_det(val):
+    if isinstance(val, str) and val.endswith("%"):
+        try:
+            return style_pct(float(val[:-1]))
+        except:
+            pass
+    return ""
+
+st.dataframe(
+    det_df.style.map(style_det, subset=fecha_cols),
+    use_container_width=True,
+    hide_index=True,
+)
+
+st.markdown("")
+
+# Tabla todos los dias (colapsable)
+with st.expander("📅 Ver todos los dias"):
     styled = (
         hdf[["Fecha","Total Llamadas","Total Desborde","% Desborde","% QUEUED","% RINGING"]]
         .style
@@ -265,20 +302,20 @@ with st.expander("📅 Ver todos los días"):
 
 st.divider()
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# ANÁLISIS INB (colapsable)
-# ═══════════════════════════════════════════════════════════════════════════════
-with st.expander("📈 Ver análisis completo de desborde INB"):
+# ======================================================================
+# ANALISIS INB (colapsable)
+# ======================================================================
+with st.expander("📈 Ver analisis completo de desborde INB"):
 
     inb_sel = st.radio(
-        "Día:", fechas, index=def_idx, horizontal=True,
+        "Dia:", fechas, index=def_idx, horizontal=True,
         label_visibility="collapsed", key="inb_radio"
     )
     inb_idx = fechas.index(inb_sel)
 
     st.markdown("")
 
-    # ── KPI cards ─────────────────────────────────────────────────────────────
+    # KPI cards
     k1, k2, k3, k4 = st.columns(4)
 
     def kpi_card(col, label, sub, val, prom):
@@ -294,13 +331,13 @@ with st.expander("📈 Ver análisis completo de desborde INB"):
                 unsafe_allow_html=True,
             )
 
-    kpi_card(k1, "% Desborde · TM", "Turno Mañana",  d["pct_tm"][inb_idx],   d["prom_tm"])
-    kpi_card(k2, "% Desborde · TT", "Turno Tarde",   d["pct_tt"][inb_idx],   d["prom_tt"])
-    kpi_card(k3, "% Desborde Total","TM + TT",        d["pct_desb"][inb_idx], d["prom_desb"])
+    kpi_card(k1, "% Desborde TM", "Turno Manana",  d["pct_tm"][inb_idx],   d["prom_tm"])
+    kpi_card(k2, "% Desborde TT", "Turno Tarde",   d["pct_tt"][inb_idx],   d["prom_tt"])
+    kpi_card(k3, "% Desborde Total","TM + TT",      d["pct_desb"][inb_idx], d["prom_desb"])
     with k4:
         st.markdown(
             f'<div class="kpi-card">'
-            f'<div class="kpi-label">Días analizados</div>'
+            f'<div class="kpi-label">Dias analizados</div>'
             f'<div class="kpi-sub">&nbsp;</div>'
             f'<div class="kpi-value" style="color:#f59e0b">{len(fechas)}</div>'
             f'</div>',
@@ -309,44 +346,7 @@ with st.expander("📈 Ver análisis completo de desborde INB"):
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # ── Tabla detallada (formato imagen) ──────────────────────────────────────
-    with st.expander("📋 Ver tabla detallada"):
-
-        filas = [
-            ("LLAMADAS TOTALES", [h["Total Llamadas"] for h in hunter], False),
-            ("DESBORDE",         [h["Total Desborde"] for h in hunter], False),
-            ("% DESBORDE",       [h["% Desborde"]     for h in hunter], True),
-            ("ABANDONADAS",      [h["QUEUED_ABS"]      for h in hunter], False),
-            ("% ABANDONADAS",    [h["% QUEUED"]        for h in hunter], True),
-            ("RINGING",          [h["RINGING_ABS"]     for h in hunter], False),
-            ("% RINGING",        [h["% RINGING"]       for h in hunter], True),
-        ]
-
-        det_rows = []
-        for label, vals, es_pct in filas:
-            det_row = {"": label}
-            for f, v in zip(fechas, vals):
-                det_row[f] = f"{v}%" if es_pct else int(v)
-            det_rows.append(det_row)
-
-        det_df     = pd.DataFrame(det_rows)
-        fecha_cols = [c for c in det_df.columns if c != ""]
-
-        def style_det(val):
-            if isinstance(val, str) and val.endswith("%"):
-                try:
-                    return style_pct(float(val[:-1]))
-                except:
-                    pass
-            return ""
-
-        st.dataframe(
-            det_df.style.map(style_det, subset=fecha_cols),
-            use_container_width=True,
-            hide_index=True,
-        )
-
-    # ── Trend chart ───────────────────────────────────────────────────────────
+    # Trend chart
     def pt_colors(vals):
         return [color_hex(v) for v in vals]
 
@@ -366,7 +366,7 @@ with st.expander("📈 Ver análisis completo de desborde INB"):
         line=dict(color="#22c55e", width=1.5, dash="dash"), mode="lines",
     ))
     fig.add_trace(go.Scatter(
-        x=fechas, y=[10] * len(fechas), name="Límite 10%",
+        x=fechas, y=[10] * len(fechas), name="Limite 10%",
         line=dict(color="#ef4444", width=1, dash="dot"), mode="lines",
     ))
     fig.update_layout(
