@@ -7,14 +7,14 @@ from google.oauth2.service_account import Credentials
 import pandas as pd
 import plotly.graph_objects as go
 
-# \u2500\u2500 Page config \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+# ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
-    page_title="Hunter Argentina \u00b7 Reporte INB",
-    page_icon="\ud83d\udcca",
+    page_title="Hunter Argentina · Reporte INB",
+    page_icon="📊",
     layout="wide",
 )
 
-# \u2500\u2500 Constantes \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+# ── Constantes ────────────────────────────────────────────────────────────────
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive",
@@ -28,7 +28,7 @@ TURNO_MANUAL = {
     "9281": "TM", "9297": "TM", "9321": "TM", "9372": "TM",
 }
 
-# \u2500\u2500 Color gradient \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+# ── Color gradient ────────────────────────────────────────────────────────────
 def lerp(a, b, t):
     return int(a + (b - a) * t)
 
@@ -47,7 +47,7 @@ def style_pct(val):
     c = color_hex(v)
     return f"color: {c}; font-weight: 700"
 
-# \u2500\u2500 Data loading (cache 30 min) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+# ── Data loading (cache 30 min) ───────────────────────────────────────────────
 @st.cache_data(ttl=1800)
 def load_data():
     if "GOOGLE_CREDENTIALS" in st.secrets:
@@ -166,4 +166,215 @@ def load_data():
         prom_tm=prom_tm, prom_tt=prom_tt,
     )
 
-# \u2500\u2500 CSS global \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+# ── CSS global ────────────────────────────────────────────────────────────────
+st.markdown("""
+<style>
+section[data-testid="stSidebar"] { display: none; }
+div[data-testid="stRadio"] label { font-size: 0.78rem !important; }
+.kpi-card {
+    background: #1e293b; border: 1px solid #334155; border-radius: 12px;
+    padding: 14px 18px; height: 100%;
+}
+.kpi-card .kpi-label { font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; letter-spacing: .05em; }
+.kpi-card .kpi-sub   { font-size: 0.62rem; color: #475569; margin-bottom: 6px; }
+.kpi-card .kpi-value { font-size: 1.85rem; font-weight: 700; margin-bottom: 4px; }
+.kpi-card .kpi-prom  { font-size: 0.68rem; color: #475569; }
+.kpi-card .kpi-prom b { color: #22c55e; }
+.wa-btn a {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: #25d366; color: #fff !important; font-weight: 600;
+    padding: 9px 18px; border-radius: 8px; text-decoration: none; font-size: 0.85rem;
+}
+.wa-btn a:hover { background: #1fbb58; }
+</style>
+""", unsafe_allow_html=True)
+
+# ── Load ──────────────────────────────────────────────────────────────────────
+with st.spinner("Cargando datos desde Google Sheets..."):
+    d = load_data()
+
+fechas     = d["fechas"]
+hunter     = d["hunter"]
+hdf        = pd.DataFrame(hunter)
+def_idx    = max(len(fechas) - 2, 0)
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# HUNTER ARGENTINA
+# ═══════════════════════════════════════════════════════════════════════════════
+col_h, col_wa = st.columns([5, 1])
+with col_h:
+    st.markdown("## 📊 Hunter Argentina")
+    st.caption("Llamadas entrantes · Resumen diario")
+
+selected   = st.radio(
+    "Día:", fechas, index=def_idx, horizontal=True, label_visibility="collapsed"
+)
+idx        = fechas.index(selected)
+dia_actual = hunter[idx]  # renombrado para no colisionar con el loop de la tabla
+
+wa_text = (
+    f"📊 *Hunter Argentina* · {dia_actual['Fecha']}\n"
+    f"━━━━━━━━━━━━━━━━\n"
+    f"📞 Total Llamadas: {dia_actual['Total Llamadas']:,}\n"
+    f"↩️ Total Desborde: {dia_actual['Total Desborde']:,}\n"
+    f"📉 % Desborde: {dia_actual['% Desborde']}%\n"
+    f"⏳ % QUEUED: {dia_actual['% QUEUED']}%\n"
+    f"🔔 % RINGING: {dia_actual['% RINGING']}%"
+)
+wa_url = f"https://wa.me/?text={urllib.parse.quote(wa_text)}"
+
+with col_wa:
+    st.markdown(
+        f'<div class="wa-btn" style="margin-top:18px"><a href="{wa_url}" target="_blank">📲 Compartir</a></div>',
+        unsafe_allow_html=True,
+    )
+
+# ── Métricas del día seleccionado ─────────────────────────────────────────────
+st.markdown(f"#### {selected}")
+c1, c2, c3, c4, c5 = st.columns(5)
+
+with c1:
+    st.metric("Total Llamadas", f"{dia_actual['Total Llamadas']:,}")
+with c2:
+    st.metric("Total Desborde", f"{dia_actual['Total Desborde']:,}")
+
+for col, key in [(c3, "% Desborde"), (c4, "% QUEUED"), (c5, "% RINGING")]:
+    with col:
+        v = dia_actual[key]
+        c = color_hex(v)
+        st.markdown(
+            f'<div style="font-size:.78rem;color:#94a3b8;margin-bottom:4px">{key}</div>'
+            f'<div style="font-size:1.85rem;font-weight:700;color:{c}">{v}%</div>',
+            unsafe_allow_html=True,
+        )
+
+st.markdown("")
+
+# ── Tabla todos los días (colapsable) ─────────────────────────────────────────
+with st.expander("📅 Ver todos los días"):
+    styled = (
+        hdf[["Fecha","Total Llamadas","Total Desborde","% Desborde","% QUEUED","% RINGING"]]
+        .style
+        .map(style_pct, subset=["% Desborde", "% QUEUED", "% RINGING"])
+        .format({
+            "Total Llamadas": "{:,}", "Total Desborde": "{:,}",
+            "% Desborde": "{}%", "% QUEUED": "{}%", "% RINGING": "{}%",
+        })
+    )
+    st.dataframe(styled, use_container_width=True, hide_index=True)
+
+st.divider()
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ANÁLISIS INB (colapsable)
+# ═══════════════════════════════════════════════════════════════════════════════
+with st.expander("📈 Ver análisis completo de desborde INB"):
+
+    inb_sel = st.radio(
+        "Día:", fechas, index=def_idx, horizontal=True,
+        label_visibility="collapsed", key="inb_radio"
+    )
+    inb_idx = fechas.index(inb_sel)
+
+    st.markdown("")
+
+    # ── KPI cards ─────────────────────────────────────────────────────────────
+    k1, k2, k3, k4 = st.columns(4)
+
+    def kpi_card(col, label, sub, val, prom):
+        c = color_hex(val)
+        with col:
+            st.markdown(
+                f'<div class="kpi-card">'
+                f'<div class="kpi-label">{label}</div>'
+                f'<div class="kpi-sub">{sub}</div>'
+                f'<div class="kpi-value" style="color:{c}">{val}%</div>'
+                f'<div class="kpi-prom">Promedio: <b>{prom}%</b></div>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+
+    kpi_card(k1, "% Desborde · TM", "Turno Mañana",  d["pct_tm"][inb_idx],   d["prom_tm"])
+    kpi_card(k2, "% Desborde · TT", "Turno Tarde",   d["pct_tt"][inb_idx],   d["prom_tt"])
+    kpi_card(k3, "% Desborde Total","TM + TT",        d["pct_desb"][inb_idx], d["prom_desb"])
+    with k4:
+        st.markdown(
+            f'<div class="kpi-card">'
+            f'<div class="kpi-label">Días analizados</div>'
+            f'<div class="kpi-sub">&nbsp;</div>'
+            f'<div class="kpi-value" style="color:#f59e0b">{len(fechas)}</div>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # ── Tabla detallada (formato imagen) ──────────────────────────────────────
+    with st.expander("📋 Ver tabla detallada"):
+
+        filas = [
+            ("LLAMADAS TOTALES", [h["Total Llamadas"] for h in hunter], False),
+            ("DESBORDE",         [h["Total Desborde"] for h in hunter], False),
+            ("% DESBORDE",       [h["% Desborde"]     for h in hunter], True),
+            ("ABANDONADAS",      [h["QUEUED_ABS"]      for h in hunter], False),
+            ("% ABANDONADAS",    [h["% QUEUED"]        for h in hunter], True),
+            ("RINGING",          [h["RINGING_ABS"]     for h in hunter], False),
+            ("% RINGING",        [h["% RINGING"]       for h in hunter], True),
+        ]
+
+        det_rows = []
+        for label, vals, es_pct in filas:
+            det_row = {"": label}
+            for f, v in zip(fechas, vals):
+                det_row[f] = f"{v}%" if es_pct else int(v)
+            det_rows.append(det_row)
+
+        det_df     = pd.DataFrame(det_rows)
+        fecha_cols = [c for c in det_df.columns if c != ""]
+
+        def style_det(val):
+            if isinstance(val, str) and val.endswith("%"):
+                try:
+                    return style_pct(float(val[:-1]))
+                except:
+                    pass
+            return ""
+
+        st.dataframe(
+            det_df.style.map(style_det, subset=fecha_cols),
+            use_container_width=True,
+            hide_index=True,
+        )
+
+    # ── Trend chart ───────────────────────────────────────────────────────────
+    def pt_colors(vals):
+        return [color_hex(v) for v in vals]
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=fechas, y=d["pct_tm"], name="TM",
+        line=dict(color="#3b82f6", width=2),
+        marker=dict(size=6, color=pt_colors(d["pct_tm"])),
+    ))
+    fig.add_trace(go.Scatter(
+        x=fechas, y=d["pct_tt"], name="TT",
+        line=dict(color="#f97316", width=2),
+        marker=dict(size=6, color=pt_colors(d["pct_tt"])),
+    ))
+    fig.add_trace(go.Scatter(
+        x=fechas, y=[d["prom_desb"]] * len(fechas), name="Promedio",
+        line=dict(color="#22c55e", width=1.5, dash="dash"), mode="lines",
+    ))
+    fig.add_trace(go.Scatter(
+        x=fechas, y=[10] * len(fechas), name="Límite 10%",
+        line=dict(color="#ef4444", width=1, dash="dot"), mode="lines",
+    ))
+    fig.update_layout(
+        paper_bgcolor="#1e293b", plot_bgcolor="#1e293b",
+        font=dict(color="#94a3b8", size=11),
+        height=220, margin=dict(l=0, r=0, t=10, b=0),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
+        xaxis=dict(gridcolor="#172033", tickfont=dict(size=10)),
+        yaxis=dict(gridcolor="#334155", ticksuffix="%", tickfont=dict(size=10)),
+    )
+    st.plotly_chart(fig, use_container_width=True)
