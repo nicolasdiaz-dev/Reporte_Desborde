@@ -299,16 +299,42 @@ for label, vals, es_pct in filas:
 det_df     = pd.DataFrame(det_rows)
 fecha_cols = [c for c in det_df.columns if c != ""]
 
-def style_det(val):
-    if isinstance(val, str) and val.endswith("%"):
-        try:
-            return style_pct(float(val[:-1]))
-        except:
-            pass
-    return ""
+def style_fila(row):
+    """Colorea % cells y aplica gradiente verde→rojo a filas LEADS."""
+    styles = pd.Series("", index=row.index)
+    label  = row.iloc[0]
+
+    # Porcentajes
+    for col in row.index[1:]:
+        val = row[col]
+        if isinstance(val, str) and val.endswith("%"):
+            try:
+                styles[col] = style_pct(float(val[:-1]))
+            except:
+                pass
+
+    # Gradiente para LEADS: mayor valor = más verde, menor = más rojo
+    if isinstance(label, str) and label.startswith("LEADS"):
+        nums = {}
+        for col in row.index[1:]:
+            try:
+                v = float(row[col])
+                if v > 0:
+                    nums[col] = v
+            except (ValueError, TypeError):
+                pass
+        if nums and max(nums.values()) != min(nums.values()):
+            vmin, vmax = min(nums.values()), max(nums.values())
+            for col, v in nums.items():
+                t = (v - vmin) / (vmax - vmin)   # 0 = rojo, 1 = verde
+                r_c = lerp(0xef, 0x22, t)
+                g_c = lerp(0x44, 0xc5, t)
+                b_c = lerp(0x44, 0x5e, t)
+                styles[col] = f"color: #{r_c:02x}{g_c:02x}{b_c:02x}; font-weight: 700"
+    return styles
 
 st.dataframe(
-    det_df.style.map(style_det, subset=fecha_cols),
+    det_df.style.apply(style_fila, axis=1),
     use_container_width=True,
     hide_index=True,
 )
