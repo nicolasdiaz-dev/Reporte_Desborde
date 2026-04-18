@@ -23,10 +23,6 @@ SCOPES = [
 SPREADSHEET_ID = "1wtXzHb0Jl8OZK0_K5BZpI4GdNcsbi9Iom_h5tUE4C4w"
 SHEET_NAME     = "DATOS INB"
 
-TURNO_MANUAL = {
-    "1348": "TM", "7417": "TM", "7423": "TM", "7443": "TM", "9140": "TM",
-    "9281": "TM", "9297": "TM", "9321": "TM", "9372": "TM",
-}
 
 # Color gradient
 def lerp(a, b, t):
@@ -87,12 +83,17 @@ def load_data():
         return vals.mode()[0] if not vals.empty else "0"
 
     df_raw["COD_AGENTE"] = df_raw["USUARIO"].apply(extraer_codigo)
-    agente_skill  = df_raw.groupby("COD_AGENTE")["SKILL"].agg(skill_primario)
-    agente_turno  = df_raw.groupby("COD_AGENTE")["TURNO"].agg(skill_primario).copy()
     agente_nombre = df_raw.groupby("COD_AGENTE")["USUARIO"].agg(lambda s: s.mode()[0])
 
-    for cod, turno in TURNO_MANUAL.items():
-        agente_turno[cod] = turno
+    # Lee el lookup de agentes desde columnas AE (SKILL), AF (TURNO), AG (COD)
+    lookup_rows  = sheet.get("AE:AG")
+    agent_lookup = {}
+    for row in lookup_rows:
+        if len(row) >= 3 and str(row[2]).strip().isdigit():
+            cod = str(row[2]).strip()
+            agent_lookup[cod] = (row[0].strip(), row[1].strip())
+    agente_skill = pd.Series({cod: v[0] for cod, v in agent_lookup.items()})
+    agente_turno = pd.Series({cod: v[1] for cod, v in agent_lookup.items()})
 
     pivot = (
         df_raw.groupby(["COD_AGENTE", "FECHA"])["ANI_TELEFONO"]
