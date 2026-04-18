@@ -61,7 +61,9 @@ def load_data():
     data   = sheet.get("A1:AC")
 
     headers = data[0] + ["COL_AA", "TURNO", "SKILL"]
-    df = pd.DataFrame(data[1:], columns=headers)
+    n_cols  = len(headers)
+    rows    = [row + [""] * (n_cols - len(row)) for row in data[1:]]
+    df      = pd.DataFrame(rows, columns=headers)
 
     df["FECHA"]        = df["FECHA"].astype(str).str.strip()
     df["ANI_TELEFONO"] = df["ANI_TELEFONO"].astype(str).str.strip()
