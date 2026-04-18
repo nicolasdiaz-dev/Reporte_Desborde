@@ -56,17 +56,18 @@ def load_data():
     sheet  = client.open_by_key(SPREADSHEET_ID).worksheet(SHEET_NAME)
     data   = sheet.get("A1:AC")
 
-    raw_headers = data[0]
-    extra   = [c for c in ["COL_AA", "TURNO", "SKILL"] if c not in raw_headers]
-    headers = raw_headers + extra
-    n_cols  = len(headers)
-    rows    = [row + [""] * (n_cols - len(row)) for row in data[1:]]
-    df      = pd.DataFrame(rows, columns=headers)
+    # Construir headers: padear a 29 cols (A:AC) y forzar nombre en AB (idx 27)
+    raw_headers = list(data[0]) if data[0] else []
+    while len(raw_headers) < 29:
+        raw_headers.append("")
+    raw_headers[27] = "TURNO"   # columna AB siempre es TURNO
+    n_cols = 29
+    rows   = [row + [""] * (n_cols - len(row)) for row in data[1:]]
+    df     = pd.DataFrame(rows, columns=raw_headers)
 
     df["FECHA"]        = df["FECHA"].astype(str).str.strip()
     df["ANI_TELEFONO"] = df["ANI_TELEFONO"].astype(str).str.strip()
     df["TURNO"]        = df["TURNO"].fillna("").astype(str).str.strip()
-    df["SKILL"]        = df["SKILL"].fillna("").astype(str).str.strip()
 
     df = df[df["FECHA"].str.match(r"^\d{8}$")]
     df["FECHA"] = pd.to_datetime(df["FECHA"], format="%Y%m%d").dt.strftime("%d/%m/%Y")
@@ -85,15 +86,25 @@ def load_data():
     df_raw["COD_AGENTE"] = df_raw["USUARIO"].apply(extraer_codigo)
     agente_nombre = df_raw.groupby("COD_AGENTE")["USUARIO"].agg(lambda s: s.mode()[0])
 
-    # Lee el lookup de agentes desde columnas AE (SKILL), AF (TURNO), AG (COD)
+    # TURNO primario: desde columna AB del sheet (ya mapeada como "TURNO")
+    agente_turno = (
+        df_raw[df_raw["TURNO"].str.upper().isin(["TM", "TT"])]
+        .groupby("COD_AGENTE")["TURNO"]
+        .agg(lambda s: s.mode()[0])
+    )
+
+    # SKILL y TURNO faltante: lookup AE (SKILL), AF (TURNO), AG (COD_AGENTE)
     lookup_rows  = sheet.get("AE:AG")
     agent_lookup = {}
     for row in lookup_rows:
         if len(row) >= 3 and str(row[2]).strip().isdigit():
             cod = str(row[2]).strip()
             agent_lookup[cod] = (row[0].strip(), row[1].strip())
+
     agente_skill = pd.Series({cod: v[0] for cod, v in agent_lookup.items()})
-    agente_turno = pd.Series({cod: v[1] for cod, v in agent_lookup.items()})
+    for cod, (_, turno) in agent_lookup.items():
+        if cod not in agente_turno.index:
+            agente_turno[cod] = turno
 
     pivot = (
         df_raw.groupby(["COD_AGENTE", "FECHA"])["ANI_TELEFONO"]
