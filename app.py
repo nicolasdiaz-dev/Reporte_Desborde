@@ -330,7 +330,7 @@ def style_fila(row):
                 r_c = lerp(0xef, 0x22, t)
                 g_c = lerp(0x44, 0xc5, t)
                 b_c = lerp(0x44, 0x5e, t)
-                styles[col] = f"color: #{r_c:02x}{g_c:02x}{b_c:02x}; font-weight: 700"
+                styles[col] = f"background-color: #{r_c:02x}{g_c:02x}{b_c:02x}; color: #fff; font-weight: 700"
     return styles
 
 st.dataframe(
