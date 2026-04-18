@@ -127,9 +127,10 @@ def load_data():
     mask_tm  = pw["TURNO"] == "TM"
     mask_tt  = pw["TURNO"] == "TT"
 
-    total_dia  = pw[fechas_cols].sum()
-    total_inb  = pw.loc[mask_inb, fechas_cols].sum()
-    total_desb = pw.loc[~mask_inb, fechas_cols].sum()
+    total_dia       = pw[fechas_cols].sum()
+    total_inb       = pw.loc[mask_inb,  fechas_cols].sum()
+    total_desb      = pw.loc[~mask_inb, fechas_cols].sum()
+    asesores_por_dia = pw.loc[mask_inb, fechas_cols].gt(0).sum()
     desb_tm    = pw.loc[mask_tm & ~mask_inb, fechas_cols].sum()
     desb_tt    = pw.loc[mask_tt & ~mask_inb, fechas_cols].sum()
 
@@ -160,15 +161,21 @@ def load_data():
         desb = int(total_desb.get(f, 0))
         q    = int(queued_h.get(f, 0))
         r    = int(ringing_h.get(f, 0))
+        a    = int(asesores_por_dia.get(f, 0))
+        lxo  = round(int(total_inb[f])  / a) if a > 0 else 0
+        lxog = round(int(total_dia[f]) / a) if a > 0 else 0
         hunter_rows.append({
-            "Fecha":          f,
-            "Total Llamadas": tot,
-            "Total Desborde": desb,
-            "% Desborde":     round(desb/tot*100, 1) if tot else 0.0,
-            "% QUEUED":       round(q/tot*100, 1)    if tot else 0.0,
-            "% RINGING":      round(r/tot*100, 1)    if tot else 0.0,
-            "QUEUED_ABS":     q,
-            "RINGING_ABS":    r,
+            "Fecha":                  f,
+            "Total Llamadas":         tot,
+            "Total Desborde":         desb,
+            "% Desborde":             round(desb/tot*100, 1) if tot else 0.0,
+            "% QUEUED":               round(q/tot*100, 1)    if tot else 0.0,
+            "% RINGING":              round(r/tot*100, 1)    if tot else 0.0,
+            "QUEUED_ABS":             q,
+            "RINGING_ABS":            r,
+            "Asesores":               a,
+            "Leads x Op":             lxo,
+            "Leads x Op General":     lxog,
         })
 
     return dict(
@@ -270,13 +277,16 @@ st.markdown("")
 
 # ── Tabla resumen visible (sin expander) ──────────────────────────────
 filas = [
-    ("LLAMADAS TOTALES", [h["Total Llamadas"] for h in hunter], False),
-    ("DESBORDE",         [h["Total Desborde"] for h in hunter], False),
-    ("% DESBORDE",       [h["% Desborde"]     for h in hunter], True),
-    ("ABANDONADAS",      [h["QUEUED_ABS"]      for h in hunter], False),
-    ("% ABANDONADAS",    [h["% QUEUED"]        for h in hunter], True),
-    ("RINGING",          [h["RINGING_ABS"]     for h in hunter], False),
-    ("% RINGING",        [h["% RINGING"]       for h in hunter], True),
+    ("LLAMADAS TOTALES",        [h["Total Llamadas"]     for h in hunter], False),
+    ("DESBORDE",                [h["Total Desborde"]     for h in hunter], False),
+    ("% DESBORDE",              [h["% Desborde"]         for h in hunter], True),
+    ("ABANDONADAS",             [h["QUEUED_ABS"]         for h in hunter], False),
+    ("% ABANDONADAS",           [h["% QUEUED"]           for h in hunter], True),
+    ("RINGING",                 [h["RINGING_ABS"]        for h in hunter], False),
+    ("% RINGING",               [h["% RINGING"]          for h in hunter], True),
+    ("ASESORES",                [h["Asesores"]           for h in hunter], False),
+    ("LEADS X OPERADOR",        [h["Leads x Op"]         for h in hunter], False),
+    ("LEADS X OPERADOR GENERAL",[h["Leads x Op General"] for h in hunter], False),
 ]
 
 det_rows = []
