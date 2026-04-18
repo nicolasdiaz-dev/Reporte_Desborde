@@ -60,7 +60,9 @@ def load_data():
     sheet  = client.open_by_key(SPREADSHEET_ID).worksheet(SHEET_NAME)
     data   = sheet.get("A1:AC")
 
-    headers = data[0] + ["COL_AA", "TURNO", "SKILL"]
+    raw_headers = data[0]
+    extra   = [c for c in ["COL_AA", "TURNO", "SKILL"] if c not in raw_headers]
+    headers = raw_headers + extra
     n_cols  = len(headers)
     rows    = [row + [""] * (n_cols - len(row)) for row in data[1:]]
     df      = pd.DataFrame(rows, columns=headers)
