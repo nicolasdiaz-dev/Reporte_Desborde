@@ -127,12 +127,12 @@ def load_data():
     mask_tm  = pw["TURNO"] == "TM"
     mask_tt  = pw["TURNO"] == "TT"
 
-    total_dia       = pw[fechas_cols].sum()
-    total_inb       = pw.loc[mask_inb,  fechas_cols].sum()
-    total_desb      = pw.loc[~mask_inb, fechas_cols].sum()
-    asesores_por_dia = pw.loc[mask_inb, fechas_cols].gt(0).sum()
-    desb_tm    = pw.loc[mask_tm & ~mask_inb, fechas_cols].sum()
-    desb_tt    = pw.loc[mask_tt & ~mask_inb, fechas_cols].sum()
+    total_dia        = pw[fechas_cols].sum()
+    total_inb        = pw.loc[mask_inb,  fechas_cols].sum()
+    total_desb       = pw.loc[~mask_inb, fechas_cols].sum()
+    asesores_por_dia = pw.loc[mask_inb,  fechas_cols].gt(0).sum()
+    desb_tm          = pw.loc[mask_tm & ~mask_inb, fechas_cols].sum()
+    desb_tt          = pw.loc[mask_tt & ~mask_inb, fechas_cols].sum()
 
     pct_desb = (total_desb / total_dia * 100).round(2)
     pct_inb  = (total_inb  / total_dia * 100).round(2)
@@ -147,8 +147,8 @@ def load_data():
     pct_tm = pct_list(desb_tm)
     pct_tt = pct_list(desb_tt)
 
-    act   = [total_dia[f] > 0 for f in fechas_cols]
-    n_act = max(sum(act), 1)
+    act    = [total_dia[f] > 0 for f in fechas_cols]
+    n_act  = max(sum(act), 1)
     prom_tm = round(sum(v for v, a in zip(pct_tm, act) if a) / n_act, 2)
     prom_tt = round(sum(v for v, a in zip(pct_tt, act) if a) / n_act, 2)
 
@@ -275,24 +275,28 @@ for col, key in [(c3, "% Desborde"), (c4, "% QUEUED"), (c5, "% RINGING")]:
 
 st.markdown("")
 
-# ── Tabla resumen visible (sin expander) ──────────────────────────────
+# ── Tabla últimos 10 días con highlight en última columna ─────────────
+fechas_10    = fechas[-10:]
+ultima_fecha = fechas_10[-1]
+
 filas = [
-    ("LLAMADAS TOTALES",        [h["Total Llamadas"]     for h in hunter], False),
-    ("DESBORDE",                [h["Total Desborde"]     for h in hunter], False),
-    ("% DESBORDE",              [h["% Desborde"]         for h in hunter], True),
-    ("ABANDONADAS",             [h["QUEUED_ABS"]         for h in hunter], False),
-    ("% ABANDONADAS",           [h["% QUEUED"]           for h in hunter], True),
-    ("RINGING",                 [h["RINGING_ABS"]        for h in hunter], False),
-    ("% RINGING",               [h["% RINGING"]          for h in hunter], True),
-    ("ASESORES",                [h["Asesores"]           for h in hunter], False),
-    ("LEADS X OPERADOR",        [h["Leads x Op"]         for h in hunter], False),
-    ("LEADS X OPERADOR GENERAL",[h["Leads x Op General"] for h in hunter], False),
+    ("LLAMADAS TOTALES",         [h["Total Llamadas"]      for h in hunter], False),
+    ("DESBORDE",                 [h["Total Desborde"]      for h in hunter], False),
+    ("% DESBORDE",               [h["% Desborde"]          for h in hunter], True),
+    ("ABANDONADAS",              [h["QUEUED_ABS"]          for h in hunter], False),
+    ("% ABANDONADAS",            [h["% QUEUED"]            for h in hunter], True),
+    ("RINGING",                  [h["RINGING_ABS"]         for h in hunter], False),
+    ("% RINGING",                [h["% RINGING"]           for h in hunter], True),
+    ("ASESORES",                 [h["Asesores"]            for h in hunter], False),
+    ("LEADS X OPERADOR",         [h["Leads x Op"]          for h in hunter], False),
+    ("LEADS X OPERADOR GENERAL", [h["Leads x Op General"]  for h in hunter], False),
 ]
 
 det_rows = []
 for label, vals, es_pct in filas:
+    vals_10 = vals[-10:]
     det_row = {"": label}
-    for f, v in zip(fechas, vals):
+    for f, v in zip(fechas_10, vals_10):
         det_row[f] = f"{v}%" if es_pct else int(v)
     det_rows.append(det_row)
 
@@ -300,20 +304,26 @@ det_df     = pd.DataFrame(det_rows)
 fecha_cols = [c for c in det_df.columns if c != ""]
 
 def style_fila(row):
-    """Colorea % cells y aplica gradiente verde→rojo a filas LEADS."""
     styles = pd.Series("", index=row.index)
     label  = row.iloc[0]
 
-    # Porcentajes
+    # Highlight última columna: fondo azul oscuro sutil + borde izquierdo
+    for col in row.index[1:]:
+        if col == ultima_fecha:
+            styles[col] = "background-color: #1e3a5f; border-left: 2px solid #3b82f6;"
+
+    # Porcentajes con color semáforo
     for col in row.index[1:]:
         val = row[col]
         if isinstance(val, str) and val.endswith("%"):
             try:
-                styles[col] = style_pct(float(val[:-1]))
+                pct_style = style_pct(float(val[:-1]))
+                base = "background-color: #1e3a5f; border-left: 2px solid #3b82f6; " if col == ultima_fecha else ""
+                styles[col] = base + pct_style
             except:
                 pass
 
-    # Gradiente para LEADS: mayor valor = más verde, menor = más rojo
+    # Gradiente verde→rojo para filas LEADS
     if isinstance(label, str) and label.startswith("LEADS"):
         nums = {}
         for col in row.index[1:]:
@@ -326,11 +336,13 @@ def style_fila(row):
         if nums and max(nums.values()) != min(nums.values()):
             vmin, vmax = min(nums.values()), max(nums.values())
             for col, v in nums.items():
-                t = (v - vmin) / (vmax - vmin)   # 0 = rojo, 1 = verde
+                t = (v - vmin) / (vmax - vmin)
                 r_c = lerp(0xef, 0x22, t)
                 g_c = lerp(0x44, 0xc5, t)
                 b_c = lerp(0x44, 0x5e, t)
-                styles[col] = f"background-color: #{r_c:02x}{g_c:02x}{b_c:02x}; color: #fff; font-weight: 700"
+                border = "border-left: 2px solid #3b82f6; " if col == ultima_fecha else ""
+                styles[col] = f"{border}background-color: #{r_c:02x}{g_c:02x}{b_c:02x}; color: #fff; font-weight: 700"
+
     return styles
 
 st.dataframe(
@@ -338,6 +350,74 @@ st.dataframe(
     use_container_width=True,
     hide_index=True,
 )
+
+st.markdown("")
+
+# ── Gráfico: Stacked Bar (INB + Desborde) + línea % Desborde ──────────
+st.markdown("#### 📊 Volumen diario vs Desborde — últimos 10 días")
+
+fig2 = go.Figure()
+
+fig2.add_trace(go.Bar(
+    x=fechas_10,
+    y=d["total_inb"][-10:],
+    name="INB",
+    marker_color="#3b82f6",
+    marker_line_width=0,
+))
+fig2.add_trace(go.Bar(
+    x=fechas_10,
+    y=d["total_desb"][-10:],
+    name="Desborde",
+    marker_color="#f97316",
+    marker_line_width=0,
+))
+fig2.add_trace(go.Scatter(
+    x=fechas_10,
+    y=d["pct_desb"][-10:],
+    name="% Desborde",
+    mode="lines+markers",
+    line=dict(color="#22c55e", width=2),
+    marker=dict(size=6, color=[color_hex(v) for v in d["pct_desb"][-10:]]),
+    yaxis="y2",
+))
+# Línea límite 10% en eje derecho
+fig2.add_trace(go.Scatter(
+    x=fechas_10,
+    y=[10] * len(fechas_10),
+    name="Límite 10%",
+    mode="lines",
+    line=dict(color="#ef4444", width=1, dash="dot"),
+    yaxis="y2",
+))
+
+fig2.update_layout(
+    barmode="stack",
+    paper_bgcolor="#1e293b",
+    plot_bgcolor="#1e293b",
+    font=dict(color="#94a3b8", size=11),
+    height=280,
+    margin=dict(l=0, r=0, t=10, b=0),
+    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
+    xaxis=dict(gridcolor="#172033", tickfont=dict(size=10)),
+    yaxis=dict(
+        gridcolor="#334155",
+        tickfont=dict(size=10),
+        title="Llamadas",
+        title_font=dict(size=10),
+    ),
+    yaxis2=dict(
+        overlaying="y",
+        side="right",
+        ticksuffix="%",
+        tickfont=dict(size=10),
+        showgrid=False,
+        title="% Desborde",
+        title_font=dict(size=10),
+        range=[0, max(d["pct_desb"][-10:]) * 1.5] if d["pct_desb"][-10:] else [0, 100],
+    ),
+)
+st.plotly_chart(fig2, use_container_width=True)
 
 st.markdown("")
 
@@ -385,9 +465,9 @@ with st.expander("📈 Ver analisis completo de desborde INB"):
                 unsafe_allow_html=True,
             )
 
-    kpi_card(k1, "% Desborde TM", "Turno Manana",  d["pct_tm"][inb_idx],   d["prom_tm"])
-    kpi_card(k2, "% Desborde TT", "Turno Tarde",   d["pct_tt"][inb_idx],   d["prom_tt"])
-    kpi_card(k3, "% Desborde Total","TM + TT",      d["pct_desb"][inb_idx], d["prom_desb"])
+    kpi_card(k1, "% Desborde TM", "Turno Manana",   d["pct_tm"][inb_idx],   d["prom_tm"])
+    kpi_card(k2, "% Desborde TT", "Turno Tarde",    d["pct_tt"][inb_idx],   d["prom_tt"])
+    kpi_card(k3, "% Desborde Total", "TM + TT",     d["pct_desb"][inb_idx], d["prom_desb"])
     with k4:
         st.markdown(
             f'<div class="kpi-card">'
@@ -400,7 +480,7 @@ with st.expander("📈 Ver analisis completo de desborde INB"):
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # Trend chart
+    # Trend chart TM / TT
     def pt_colors(vals):
         return [color_hex(v) for v in vals]
 
