@@ -16,8 +16,10 @@ client = gspread.authorize(creds)
 sheet = client.open_by_key(SPREADSHEET_ID).worksheet(SHEET_NAME)
 
 data = sheet.get("A1:AC")
-headers = data[0] + ["COL_AA", "TURNO", "SKILL"]
-df = pd.DataFrame(data[1:], columns=headers)
+headers = data[0]
+n_cols = len(headers)
+padded_rows = [row + [""] * (n_cols - len(row)) for row in data[1:]]
+df = pd.DataFrame(padded_rows, columns=headers)
 
 # ── Limpieza ──────────────────────────────────────────────────────────────────
 df["FECHA"] = df["FECHA"].astype(str).str.strip()
